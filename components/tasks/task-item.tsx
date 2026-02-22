@@ -77,7 +77,12 @@ export function TaskItem({ task, onToggle, onDelete, isLast }: TaskItemProps) {
           >
             {task.title}
           </span>
-          {task.notes && (
+          {task.timeBlockId && (
+            <span className="inline-block text-[10px] font-mono text-accent bg-accent-dim px-1.5 py-0.5 rounded mt-0.5">
+              scheduled
+            </span>
+          )}
+          {task.notes && !task.timeBlockId && (
             <span className="text-[12px] text-text-muted block mt-0.5 truncate">
               {task.notes}
             </span>
