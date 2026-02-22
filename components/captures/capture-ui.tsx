@@ -81,7 +81,7 @@ export function CaptureUI() {
         onClick={() => setOpen(true)}
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
-        className="fixed bottom-[5.25rem] right-4 z-40 w-13 h-13 rounded-full bg-accent shadow-lg shadow-accent/30 flex items-center justify-center text-white"
+        className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-4 z-40 w-13 h-13 rounded-full bg-accent shadow-lg shadow-accent/30 flex items-center justify-center text-white"
         style={{ width: 52, height: 52 }}
         aria-label="Quick capture (⌘K)"
       >
