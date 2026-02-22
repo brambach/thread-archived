@@ -5,6 +5,7 @@ import { getToday } from "@/lib/utils";
 import { TaskList } from "@/components/tasks/task-list";
 import { CaptureInbox } from "@/components/captures/capture-inbox";
 import { TomorrowTop3 } from "@/components/day-review/tomorrow-top3";
+import { LocalDate } from "@/components/ui/local-date";
 import type { Task, Capture } from "@/types";
 
 async function getTodaysTasks(): Promise<Task[]> {
@@ -43,19 +44,13 @@ export default async function TasksPage() {
     getYesterdayTop3(),
   ]);
 
-  const dateStr = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-
   return (
     <div className="pt-2 pb-6">
       <header className="py-2 pb-5">
         <h1 className="text-[26px] font-bold tracking-tight text-text leading-tight">
           Tasks
         </h1>
-        <p className="text-sm text-text-secondary mt-0.5">{dateStr}</p>
+        <LocalDate className="text-sm text-text-secondary mt-0.5" />
       </header>
 
       <TomorrowTop3 items={top3} />

@@ -7,6 +7,8 @@ import { HabitList } from "@/components/morning/habit-list";
 import { GymTodayCard } from "@/components/gym/gym-today-card";
 import { EnergyPrompt } from "@/components/day-review/energy-prompt";
 import { CloseDayButton } from "@/components/day-review/close-day-button";
+import { LocalDate } from "@/components/ui/local-date";
+import { LocalGreeting } from "@/components/ui/local-greeting";
 import Link from "next/link";
 import type { HabitWithCompletion, WorkoutSummary } from "@/types";
 
@@ -119,16 +121,6 @@ async function getTodayWorkout(): Promise<WorkoutSummary | null> {
 }
 
 export default async function TodayPage() {
-  const now = new Date();
-  const hour = now.getHours();
-  const greeting =
-    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  const dateStr = now.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-
   const today = getToday();
   const [habitsData, todayWorkout, todayReview] = await Promise.all([
     getHabitsWithCompletions(),
@@ -141,10 +133,8 @@ export default async function TodayPage() {
   return (
     <div className="pt-2 pb-6">
       <header className="py-2 pb-4">
-        <h1 className="text-[26px] font-bold tracking-tight text-text leading-tight">
-          {greeting}, Bryce.
-        </h1>
-        <p className="text-sm text-text-secondary mt-0.5">{dateStr}</p>
+        <LocalGreeting name="Bryce" className="text-[26px] font-bold tracking-tight text-text leading-tight" />
+        <LocalDate className="text-sm text-text-secondary mt-0.5" />
         <p className="text-[13px] italic text-text-muted mt-2 mb-3 leading-snug">
           {morningQuote}
         </p>
