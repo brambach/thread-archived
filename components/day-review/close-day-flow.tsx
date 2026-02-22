@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getEveningQuote } from "@/lib/quotes";
+import { getLocalToday } from "@/lib/utils";
 import { useSleep } from "@/components/sleep/sleep-provider";
 import type { Task, DayReview } from "@/types";
 
@@ -52,8 +53,10 @@ export function CloseDayFlow({ onClose }: CloseDayFlowProps) {
     onClose();
   };
 
+  const localDate = getLocalToday();
+
   useEffect(() => {
-    fetch("/api/day-reviews/recap")
+    fetch(`/api/day-reviews/recap?date=${localDate}`)
       .then((r) => r.json())
       .then((data: RecapData) => {
         setRecapData(data);
@@ -87,6 +90,7 @@ export function CloseDayFlow({ onClose }: CloseDayFlowProps) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        date: localDate,
         energyRating,
         tasksCompleted: recapData?.tasksCompleted,
         habitsCompleted: recapData?.habitsCompleted,
@@ -104,7 +108,7 @@ export function CloseDayFlow({ onClose }: CloseDayFlowProps) {
     setSubmitting(true);
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+    const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`;
 
     const ops: Promise<unknown>[] = [];
     for (const [id, action] of Object.entries(taskActions)) {
@@ -132,6 +136,7 @@ export function CloseDayFlow({ onClose }: CloseDayFlowProps) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        date: localDate,
         tomorrowTop3: top3.filter(Boolean),
         oneLine: oneLine.trim() || null,
       }),

@@ -55,13 +55,15 @@ export function TaskList({ initialTasks }: TaskListProps) {
   }, []);
 
   const handleAdd = useCallback(
-    async (title: string) => {
+    async (title: string, date?: string) => {
+      const targetDate = date || today;
+      const isFuture = targetDate !== today;
       const tempId = `optimistic-${Date.now()}`;
       const optimisticTask = {
         id: tempId,
         title,
         notes: null,
-        date: today,
+        date: targetDate,
         isDone: false,
         doneAt: null,
         timeBlockId: null,
@@ -70,19 +72,26 @@ export function TaskList({ initialTasks }: TaskListProps) {
         createdAt: new Date(),
       } as unknown as Task;
 
-      setTasks((prev) => [...prev, optimisticTask]);
+      // Only show in today's list if it's for today
+      if (!isFuture) {
+        setTasks((prev) => [...prev, optimisticTask]);
+      }
 
       try {
         const res = await fetch("/api/tasks", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, date: today }),
+          body: JSON.stringify({ title, date: targetDate }),
         });
         if (!res.ok) throw new Error("Failed");
         const newTask = await res.json();
-        setTasks((prev) => prev.map((t) => (t.id === tempId ? newTask : t)));
+        if (!isFuture) {
+          setTasks((prev) => prev.map((t) => (t.id === tempId ? newTask : t)));
+        }
       } catch {
-        setTasks((prev) => prev.filter((t) => t.id !== tempId));
+        if (!isFuture) {
+          setTasks((prev) => prev.filter((t) => t.id !== tempId));
+        }
       }
     },
     [today]
