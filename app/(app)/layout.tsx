@@ -7,7 +7,7 @@ export default function AppLayout({
 }) {
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
-      <main className="flex-1 overflow-y-auto px-5 pt-[env(safe-area-inset-top)] pb-24">
+      <main className="flex-1 overflow-y-auto px-5 pt-[env(safe-area-inset-top)] pb-24 max-w-lg mx-auto w-full">
         {children}
       </main>
       <BottomNav />
