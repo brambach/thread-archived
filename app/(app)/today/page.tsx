@@ -1,9 +1,11 @@
 import { db } from "@/lib/db";
-import { habits, habitCompletions, workouts, workoutSets, exercises } from "@/lib/db/schema";
+import { habits, habitCompletions, workouts, workoutSets, exercises, dayReviews } from "@/lib/db/schema";
 import { eq, gte, asc, desc, inArray } from "drizzle-orm";
 import { getToday } from "@/lib/utils";
 import { HabitList } from "@/components/morning/habit-list";
 import { GymTodayCard } from "@/components/gym/gym-today-card";
+import { EnergyPrompt } from "@/components/day-review/energy-prompt";
+import { CloseDayButton } from "@/components/day-review/close-day-button";
 import Link from "next/link";
 import type { HabitWithCompletion, WorkoutSummary } from "@/types";
 
@@ -126,18 +128,21 @@ export default async function TodayPage() {
     day: "numeric",
   });
 
-  const [habitsData, todayWorkout] = await Promise.all([
+  const today = getToday();
+  const [habitsData, todayWorkout, todayReview] = await Promise.all([
     getHabitsWithCompletions(),
     getTodayWorkout(),
+    db.select().from(dayReviews).where(eq(dayReviews.date, today)).limit(1).then((r) => r[0] ?? null),
   ]);
 
   return (
     <div className="pt-2 pb-6">
-      <header className="py-2 pb-5">
+      <header className="py-2 pb-4">
         <h1 className="text-[26px] font-bold tracking-tight text-text leading-tight">
           {greeting}, Bryce.
         </h1>
-        <p className="text-sm text-text-secondary mt-0.5">{dateStr}</p>
+        <p className="text-sm text-text-secondary mt-0.5 mb-3">{dateStr}</p>
+        <EnergyPrompt initialRating={todayReview?.energyRating ?? null} />
       </header>
 
       <HabitList initialHabits={habitsData} />
@@ -158,6 +163,8 @@ export default async function TodayPage() {
         </div>
         <GymTodayCard todayWorkout={todayWorkout} />
       </section>
+
+      <CloseDayButton />
     </div>
   );
 }

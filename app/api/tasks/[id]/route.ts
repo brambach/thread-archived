@@ -10,7 +10,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const body = await req.json();
-  const { title, notes, isDone, sortOrder, timeBlockId } = body;
+  const { title, notes, isDone, sortOrder, timeBlockId, date } = body;
 
   const updateData: Partial<{
     title: string;
@@ -19,6 +19,7 @@ export async function PATCH(
     doneAt: Date | null;
     sortOrder: number;
     timeBlockId: string | null;
+    date: string | null;
   }> = {};
 
   if (title !== undefined) updateData.title = title.trim();
@@ -29,6 +30,7 @@ export async function PATCH(
   }
   if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
   if (timeBlockId !== undefined) updateData.timeBlockId = timeBlockId;
+  if (date !== undefined) updateData.date = date;
 
   const [updated] = await db
     .update(tasks)

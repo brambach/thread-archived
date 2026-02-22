@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
-import { tasks, captures } from "@/lib/db/schema";
+import { tasks, captures, dayReviews } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { getToday } from "@/lib/utils";
 import { TaskList } from "@/components/tasks/task-list";
 import { CaptureInbox } from "@/components/captures/capture-inbox";
+import { TomorrowTop3 } from "@/components/day-review/tomorrow-top3";
 import type { Task, Capture } from "@/types";
 
 async function getTodaysTasks(): Promise<Task[]> {
@@ -23,10 +24,23 @@ async function getUnprocessedCaptures(): Promise<Capture[]> {
     .orderBy(asc(captures.createdAt));
 }
 
+async function getYesterdayTop3(): Promise<string[]> {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split("T")[0];
+  const [review] = await db
+    .select({ tomorrowTop3: dayReviews.tomorrowTop3 })
+    .from(dayReviews)
+    .where(eq(dayReviews.date, yesterdayStr))
+    .limit(1);
+  return review?.tomorrowTop3 ?? [];
+}
+
 export default async function TasksPage() {
-  const [todaysTasks, unprocessedCaptures] = await Promise.all([
+  const [todaysTasks, unprocessedCaptures, top3] = await Promise.all([
     getTodaysTasks(),
     getUnprocessedCaptures(),
+    getYesterdayTop3(),
   ]);
 
   const dateStr = new Date().toLocaleDateString("en-US", {
@@ -44,6 +58,7 @@ export default async function TasksPage() {
         <p className="text-sm text-text-secondary mt-0.5">{dateStr}</p>
       </header>
 
+      <TomorrowTop3 items={top3} />
       <CaptureInbox initialCaptures={unprocessedCaptures} />
       <TaskList initialTasks={todaysTasks} />
     </div>
