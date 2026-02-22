@@ -35,13 +35,13 @@ export function HabitList({ initialHabits }: HabitListProps) {
                 : h.streak
               : Math.max(0, h.streak - 1),
             completion: h.completion
-              ? { ...h.completion, completed, completedAt: completed ? new Date().toISOString() : null }
+              ? { ...h.completion, completed, completedAt: completed ? new Date() : null }
               : {
                   id: "optimistic",
                   habitId,
                   date: today,
                   completed,
-                  completedAt: completed ? new Date().toISOString() : null,
+                  completedAt: completed ? new Date() : null,
                 },
           };
         })
@@ -186,19 +186,41 @@ export function HabitList({ initialHabits }: HabitListProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="rounded-xl border border-border bg-surface p-6 text-center"
+              className="rounded-xl border border-border bg-surface p-8 text-center"
             >
-              <p className="text-text-secondary text-sm">No habits yet.</p>
-              <p className="text-text-muted text-xs mt-1">
-                Tap{" "}
-                <button
-                  onClick={() => setEditorOpen(true)}
-                  className="text-accent underline-offset-2 underline"
+              <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center mx-auto mb-3">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-text-muted"
                 >
-                  + manage habits
-                </button>{" "}
-                to build your morning routine.
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                </svg>
+              </div>
+              <p className="text-text-secondary text-sm font-medium">
+                Build your morning routine.
               </p>
+              <p className="text-text-muted text-xs mt-1">
+                Small daily habits compound into real change.
+              </p>
+              <button
+                onClick={() => setEditorOpen(true)}
+                className="mt-4 px-4 py-2 bg-accent text-white rounded-lg text-[13px] font-medium"
+              >
+                Add First Habit
+              </button>
             </motion.div>
           ) : (
             <motion.div

@@ -118,11 +118,29 @@ export function TaskList({ initialTasks }: TaskListProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="rounded-xl border border-border bg-surface p-6 text-center"
+            className="rounded-xl border border-border bg-surface p-8 text-center"
           >
-            <p className="text-text-secondary text-sm">No tasks for today.</p>
+            <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center mx-auto mb-3">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-text-muted"
+              >
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+              </svg>
+            </div>
+            <p className="text-text-secondary text-sm font-medium">
+              Clean slate.
+            </p>
             <p className="text-text-muted text-xs mt-1">
-              Add your first task below.
+              Add a task below to plan your day.
             </p>
           </motion.div>
         ) : (

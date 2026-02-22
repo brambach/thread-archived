@@ -57,10 +57,30 @@ export function GymOverview({ workoutDates, recentWorkouts, thisMonthCount }: Gy
         </div>
 
         {recentWorkouts.length === 0 ? (
-          <div className="rounded-xl border border-border bg-surface p-6 text-center">
-            <p className="text-[15px] text-text-secondary">No workouts logged yet.</p>
-            <p className="text-[13px] text-text-muted mt-1">
-              Tap &ldquo;Log a workout&rdquo; to get started.
+          <div className="rounded-xl border border-border bg-surface p-8 text-center">
+            <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center mx-auto mb-3">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-text-muted"
+              >
+                <path d="M6.5 6.5h11M6.5 17.5h11" />
+                <path d="M4 9v6M20 9v6" />
+                <path d="M2 10v4M22 10v4" />
+                <line x1="12" y1="6.5" x2="12" y2="17.5" />
+              </svg>
+            </div>
+            <p className="text-text-secondary text-sm font-medium">
+              No workouts logged yet.
+            </p>
+            <p className="text-text-muted text-xs mt-1">
+              Your training history will appear here.
             </p>
           </div>
         ) : (
