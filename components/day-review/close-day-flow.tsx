@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getEveningQuote } from "@/lib/quotes";
+import { useSleep } from "@/components/sleep/sleep-provider";
 import type { Task, DayReview } from "@/types";
 
 // Warm palette — slightly amber-tinted, winding down
@@ -44,6 +45,12 @@ export function CloseDayFlow({ onClose }: CloseDayFlowProps) {
   const [top3, setTop3] = useState(["", "", ""]);
   const [oneLine, setOneLine] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { enterSleep } = useSleep();
+
+  const handleSleep = () => {
+    enterSleep();
+    onClose();
+  };
 
   useEffect(() => {
     fetch("/api/day-reviews/recap")
@@ -223,7 +230,7 @@ export function CloseDayFlow({ onClose }: CloseDayFlowProps) {
               submitting={submitting}
             />
           ) : (
-            <DoneStep key="done" onClose={onClose} />
+            <DoneStep key="done" onClose={onClose} onSleep={handleSleep} />
           )}
         </AnimatePresence>
       </div>
@@ -603,7 +610,7 @@ function IntentionsStep({
 
 // ── Done ────────────────────────────────────────────────────────────────────
 
-function DoneStep({ onClose }: { onClose: () => void }) {
+function DoneStep({ onClose, onSleep }: { onClose: () => void; onSleep: () => void }) {
   const quote = getEveningQuote();
 
   return (
@@ -611,8 +618,7 @@ function DoneStep({ onClose }: { onClose: () => void }) {
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
-      className="flex flex-col items-center justify-center h-full min-h-[70vh] px-8 cursor-pointer select-none"
-      onClick={onClose}
+      className="flex flex-col items-center justify-center h-full min-h-[70vh] px-8 select-none"
     >
       <motion.div
         initial={{ scale: 0 }}
@@ -635,21 +641,46 @@ function DoneStep({ onClose }: { onClose: () => void }) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7, duration: 0.6, ease: "easeOut" }}
-        className="text-center text-sm italic leading-relaxed max-w-xs"
+        className="text-center text-sm italic leading-relaxed max-w-xs mb-12"
         style={{ color: WARM.accentDim }}
       >
         &ldquo;{quote}&rdquo;
       </motion.p>
 
-      <motion.p
+      {/* Sleep mode button */}
+      <motion.button
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.2, duration: 0.5 }}
+        onClick={onSleep}
+        className="w-full max-w-[260px] py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.97] mb-3 flex items-center justify-center gap-2"
+        style={{ backgroundColor: WARM.accent, color: "#0F0C09" }}
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+        Enter Sleep Mode
+      </motion.button>
+
+      <motion.button
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.8, duration: 0.5 }}
-        className="text-xs mt-10"
-        style={{ color: WARM.border }}
+        transition={{ delay: 1.5, duration: 0.5 }}
+        onClick={onClose}
+        className="text-xs py-2 px-4 transition-opacity hover:opacity-80"
+        style={{ color: WARM.textMuted }}
       >
-        tap to close
-      </motion.p>
+        or just close
+      </motion.button>
     </motion.div>
   );
 }

@@ -7,9 +7,10 @@ import type { Task } from "@/types";
 
 interface TaskDrawerProps {
   tasks: Task[];
+  onTaskTap?: (task: Task) => void;
 }
 
-export function TaskDrawer({ tasks }: TaskDrawerProps) {
+export function TaskDrawer({ tasks, onTaskTap }: TaskDrawerProps) {
   const [expanded, setExpanded] = useState(false);
 
   if (tasks.length === 0) return null;
@@ -25,7 +26,7 @@ export function TaskDrawer({ tasks }: TaskDrawerProps) {
           Unscheduled
         </span>
         <span className="text-[11px] font-medium text-text-secondary">
-          {tasks.length} task{tasks.length !== 1 ? "s" : ""}
+          {tasks.length} task{tasks.length !== 1 ? "s" : ""} · tap to schedule
         </span>
       </button>
 
@@ -46,7 +47,7 @@ export function TaskDrawer({ tasks }: TaskDrawerProps) {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.15 }}
               >
-                <TaskPill task={task} />
+                <TaskPill task={task} onTap={onTaskTap} />
               </motion.div>
             ))}
           </AnimatePresence>

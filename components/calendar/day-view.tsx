@@ -295,6 +295,109 @@ export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }:
     [selectedDate]
   );
 
+  // Tap unscheduled task → schedule to next available slot
+  const handleTaskTap = useCallback(
+    async (task: Task) => {
+      // Find next available 30-min slot
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+      // Start searching from current time (rounded up to next 30-min) if today,
+      // otherwise from 9 AM
+      let searchStart: number;
+      if (isToday) {
+        searchStart = Math.ceil(currentMinutes / 30) * 30;
+      } else {
+        searchStart = 9 * 60; // 9 AM
+      }
+
+      const startMin = START_HOUR * 60;
+      const endMin = END_HOUR * 60;
+
+      // Clamp to calendar bounds
+      if (searchStart < startMin) searchStart = startMin;
+
+      let foundSlot: string | null = null;
+      for (let min = searchStart; min < endMin; min += 30) {
+        const time = `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+        if (!isSlotOccupied(time)) {
+          foundSlot = time;
+          break;
+        }
+      }
+
+      // If no slot found after current time, try from the beginning of the day
+      if (!foundSlot) {
+        for (let min = startMin; min < searchStart; min += 30) {
+          const time = `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+          if (!isSlotOccupied(time)) {
+            foundSlot = time;
+            break;
+          }
+        }
+      }
+
+      if (!foundSlot) return; // No available slots
+
+      const endTime = addMinutes(foundSlot, 30);
+
+      // Optimistically create block + assign task
+      const tempBlockId = crypto.randomUUID();
+      const tempBlock: TimeBlock = {
+        id: tempBlockId,
+        date: selectedDate,
+        startTime: foundSlot,
+        endTime,
+        label: null,
+        color: null,
+        createdAt: new Date(),
+      };
+      setBlocks((prev) => [...prev, tempBlock]);
+      setTasks((prev) =>
+        prev.map((t) => (t.id === task.id ? { ...t, timeBlockId: tempBlockId } : t))
+      );
+
+      // Scroll to the new block
+      if (scrollRef.current) {
+        const slotMinutes = timeToMinutes(foundSlot);
+        const offset = ((slotMinutes - START_HOUR * 60) / 30) * SLOT_HEIGHT;
+        scrollRef.current.scrollTo({
+          top: Math.max(0, offset - 100),
+          behavior: "smooth",
+        });
+      }
+
+      try {
+        const blockRes = await fetch("/api/time-blocks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date: selectedDate, startTime: foundSlot, endTime }),
+        });
+        const createdBlock = await blockRes.json();
+        setBlocks((prev) =>
+          prev.map((b) => (b.id === tempBlockId ? createdBlock : b))
+        );
+        await fetch(`/api/tasks/${task.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ timeBlockId: createdBlock.id }),
+        });
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === task.id ? { ...t, timeBlockId: createdBlock.id } : t
+          )
+        );
+      } catch {
+        // Revert on error
+        setBlocks((prev) => prev.filter((b) => b.id !== tempBlockId));
+        setTasks((prev) =>
+          prev.map((t) => (t.id === task.id ? { ...t, timeBlockId: null } : t))
+        );
+      }
+    },
+    [selectedDate, isToday, isSlotOccupied]
+  );
+
   // dnd-kit sensors
   const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: { distance: 8 },
@@ -519,7 +622,7 @@ export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }:
         </div>
 
         {/* Task drawer */}
-        <TaskDrawer tasks={unscheduledTasks} />
+        <TaskDrawer tasks={unscheduledTasks} onTaskTap={handleTaskTap} />
       </div>
 
       {/* Drag overlay */}
