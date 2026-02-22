@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   DndContext,
   DragOverlay,
@@ -82,6 +82,7 @@ export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }:
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [gcalEvents, setGcalEvents] = useState<GCalEvent[]>(initialGCalEvents);
   const [editingBlock, setEditingBlock] = useState<TimeBlock | null>(null);
+  const [confirmingDeleteBlock, setConfirmingDeleteBlock] = useState<TimeBlock | null>(null);
   const [showGcalSettings, setShowGcalSettings] = useState(false);
   const [nowOffset, setNowOffset] = useState<number | null>(getNowOffset);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
@@ -269,6 +270,10 @@ export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }:
     },
     [blocks]
   );
+
+  const handleLongPress = useCallback((block: TimeBlock) => {
+    setConfirmingDeleteBlock(block);
+  }, []);
 
   const handleUnlinkTask = useCallback(
     async (taskId: string) => {
@@ -491,6 +496,7 @@ export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }:
                       block={block}
                       task={scheduledMap.get(block.id) ?? null}
                       onTap={setEditingBlock}
+                      onLongPress={handleLongPress}
                     />
                   </div>
                 ))}
@@ -537,6 +543,59 @@ export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }:
         onClose={() => setShowGcalSettings(false)}
         onConnectionChange={handleGcalConnectionChange}
       />
+
+      {/* Long-press delete confirmation */}
+      <AnimatePresence>
+        {confirmingDeleteBlock && (
+          <>
+            <motion.div
+              key="confirm-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-40 bg-black/60"
+              onClick={() => setConfirmingDeleteBlock(null)}
+            />
+            <motion.div
+              key="confirm-sheet"
+              initial={{ opacity: 0, y: 16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.97 }}
+              transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
+              className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+            >
+              <div className="bg-surface-2 rounded-2xl p-4 border border-border">
+                <p className="text-[15px] font-semibold text-text text-center mb-1">
+                  Delete time block?
+                </p>
+                <p className="text-[13px] text-text-secondary text-center mb-4">
+                  {confirmingDeleteBlock.label
+                    ? `"${confirmingDeleteBlock.label}" will be removed.`
+                    : "This block will be removed."}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConfirmingDeleteBlock(null)}
+                    className="flex-1 py-3 rounded-xl bg-surface border border-border text-[14px] font-medium text-text-secondary active:bg-border transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleDeleteBlock(confirmingDeleteBlock.id);
+                      setConfirmingDeleteBlock(null);
+                    }}
+                    className="flex-1 py-3 rounded-xl bg-danger/[0.08] border border-danger/20 text-[14px] font-medium text-danger active:bg-danger/20 transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </DndContext>
   );
 }
