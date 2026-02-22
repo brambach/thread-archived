@@ -18,7 +18,9 @@ import { DateScrubber } from "./date-scrubber";
 import { TaskDrawer } from "./task-drawer";
 import { TaskPill } from "./task-pill";
 import { DroppableSlot } from "./droppable-slot";
-import type { TimeBlock, Task } from "@/types";
+import { GCalEventChip, GCalAllDayBanner } from "./gcal-event-chip";
+import { GCalSettings } from "./gcal-settings";
+import type { TimeBlock, Task, GCalEvent } from "@/types";
 
 const SLOT_HEIGHT = 60;
 const START_HOUR = 7;
@@ -26,7 +28,8 @@ const END_HOUR = 22;
 const TOTAL_SLOTS = (END_HOUR - START_HOUR) * 2;
 
 function getToday(): string {
-  return new Date().toISOString().split("T")[0];
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function slotToTime(slotIndex: number): string {
@@ -67,17 +70,29 @@ function getNowOffset(): number | null {
 interface DayViewProps {
   initialBlocks: TimeBlock[];
   initialTasks: Task[];
+  initialGCalEvents?: GCalEvent[];
 }
 
-export function DayView({ initialBlocks, initialTasks }: DayViewProps) {
-  const [selectedDate, setSelectedDate] = useState(getToday);
+export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }: DayViewProps) {
+  // Initialize as "" so server and client agree (avoids UTC vs local timezone hydration mismatch).
+  // useEffect below sets it to the correct local date after mount.
+  const [mounted, setMounted] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [blocks, setBlocks] = useState<TimeBlock[]>(initialBlocks);
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [gcalEvents, setGcalEvents] = useState<GCalEvent[]>(initialGCalEvents);
   const [editingBlock, setEditingBlock] = useState<TimeBlock | null>(null);
+  const [showGcalSettings, setShowGcalSettings] = useState(false);
   const [nowOffset, setNowOffset] = useState<number | null>(getNowOffset);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const didScrollRef = useRef(false);
+
+  // Set local date after mount — never during SSR — so server/client always agree on ""
+  useEffect(() => {
+    setSelectedDate(getToday());
+    setMounted(true);
+  }, []);
 
   const isToday = selectedDate === getToday();
 
@@ -118,7 +133,7 @@ export function DayView({ initialBlocks, initialTasks }: DayViewProps) {
 
   // Fetch data when date changes
   useEffect(() => {
-    if (selectedDate === getToday() && !didScrollRef.current) return; // initial render uses props
+    if (!selectedDate) return; // not mounted yet
     let cancelled = false;
     async function fetchData() {
       try {
@@ -134,9 +149,29 @@ export function DayView({ initialBlocks, initialTasks }: DayViewProps) {
       } catch {
         // silently fail, keep current state
       }
+      // Fetch gcal events separately so failures don't block the rest
+      try {
+        const gcalRes = await fetch(`/api/google/events?date=${selectedDate}`);
+        if (cancelled) return;
+        const events = await gcalRes.json();
+        setGcalEvents(events);
+      } catch {
+        setGcalEvents([]);
+      }
     }
     fetchData();
     return () => { cancelled = true; };
+  }, [selectedDate]);
+
+  // Refetch gcal events when connection changes
+  const handleGcalConnectionChange = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/google/events?date=${selectedDate}`);
+      const events = await res.json();
+      setGcalEvents(events);
+    } catch {
+      setGcalEvents([]);
+    }
   }, [selectedDate]);
 
   // Check if a slot overlaps existing blocks
@@ -359,6 +394,17 @@ export function DayView({ initialBlocks, initialTasks }: DayViewProps) {
     ? tasks.find((t) => t.id === activeTaskId) ?? null
     : null;
 
+  // Split gcal events into all-day and timed
+  const { allDayEvents, timedEvents } = useMemo(() => {
+    const allDay: GCalEvent[] = [];
+    const timed: GCalEvent[] = [];
+    for (const e of gcalEvents) {
+      if (e.isAllDay) allDay.push(e);
+      else timed.push(e);
+    }
+    return { allDayEvents: allDay, timedEvents: timed };
+  }, [gcalEvents]);
+
   // Generate slot data
   const slots = useMemo(() => {
     return Array.from({ length: TOTAL_SLOTS }, (_, i) => {
@@ -369,6 +415,9 @@ export function DayView({ initialBlocks, initialTasks }: DayViewProps) {
     });
   }, []);
 
+  // Don't render until mounted — avoids SSR/client date mismatch
+  if (!mounted) return null;
+
   return (
     <DndContext
       sensors={sensors}
@@ -376,13 +425,20 @@ export function DayView({ initialBlocks, initialTasks }: DayViewProps) {
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col fixed inset-0 top-[env(safe-area-inset-top)] bottom-[calc(50px+env(safe-area-inset-bottom))] px-5 pt-2 pb-2">
-        <DateScrubber selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        <DateScrubber
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          onSettingsTap={() => setShowGcalSettings(true)}
+        />
 
         {/* Scrollable grid */}
         <div
           ref={scrollRef}
           className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-border bg-surface"
         >
+          {/* All-day Google Calendar events */}
+          <GCalAllDayBanner events={allDayEvents} />
+
           <div
             className="relative"
             style={{ height: TOTAL_SLOTS * SLOT_HEIGHT }}
@@ -417,8 +473,17 @@ export function DayView({ initialBlocks, initialTasks }: DayViewProps) {
               </DroppableSlot>
             ))}
 
+            {/* Google Calendar events layer (behind time blocks) */}
+            {timedEvents.length > 0 && (
+              <div className="absolute top-0 left-[48px] right-0 bottom-0 pointer-events-none z-[5]">
+                {timedEvents.map((event) => (
+                  <GCalEventChip key={event.id} event={event} />
+                ))}
+              </div>
+            )}
+
             {/* Time blocks layer */}
-            <div className="absolute top-0 left-[48px] right-0 bottom-0 pointer-events-none">
+            <div className="absolute top-0 left-[48px] right-0 bottom-0 pointer-events-none z-[10]">
               <AnimatePresence>
                 {blocks.map((block) => (
                   <div key={block.id} className="pointer-events-auto" data-block>
@@ -464,6 +529,13 @@ export function DayView({ initialBlocks, initialTasks }: DayViewProps) {
         onUpdate={handleUpdateBlock}
         onDelete={handleDeleteBlock}
         onUnlinkTask={handleUnlinkTask}
+      />
+
+      {/* Google Calendar settings */}
+      <GCalSettings
+        open={showGcalSettings}
+        onClose={() => setShowGcalSettings(false)}
+        onConnectionChange={handleGcalConnectionChange}
       />
     </DndContext>
   );

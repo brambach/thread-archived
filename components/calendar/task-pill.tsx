@@ -24,6 +24,7 @@ export function TaskPill({ task, isDragging }: TaskPillProps) {
       {...listeners}
       {...attributes}
       style={style}
+      suppressHydrationWarning
       className={cn(
         "inline-flex items-center rounded-full border border-border px-3 py-1.5 text-[13px] font-medium touch-none select-none",
         isDragging

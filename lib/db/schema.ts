@@ -186,3 +186,18 @@ export const dayReviews = pgTable("day_reviews", {
   hadWorkout: boolean("had_workout").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
+
+// ── Google Calendar Integration ─────────────────────────
+
+export const googleTokens = pgTable("google_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  calendarId: text("calendar_id").default("primary"),
+  email: text("email"),
+  // JSON array of calendar IDs to show; null means show all
+  selectedCalendarIds: text("selected_calendar_ids"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});

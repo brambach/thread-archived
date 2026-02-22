@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn, getLocalToday } from "@/lib/utils";
 import type { WorkTask } from "@/types";
 
 const STATUS_NEXT: Record<string, string> = {
@@ -111,7 +111,7 @@ export function WorkTaskItem({
   const isOverdue =
     task.dueDate &&
     !isDone &&
-    task.dueDate < new Date().toISOString().split("T")[0];
+    task.dueDate < getLocalToday();
 
   return (
     <motion.div

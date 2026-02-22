@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { ExerciseBlock } from "./exercise-block";
 import { ExercisePicker } from "./exercise-picker";
-import { cn } from "@/lib/utils";
+import { cn, getLocalToday } from "@/lib/utils";
 import type { Exercise } from "@/types";
 
 interface WorkoutExercise {
@@ -51,7 +51,7 @@ export function WorkoutLogger({ exercises }: WorkoutLoggerProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: workoutName.trim() || null,
-        date: new Date().toISOString().split("T")[0],
+        date: getLocalToday(),
       }),
     });
     if (res.ok) {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn, getLocalToday } from "@/lib/utils";
 import type { JournalEntry } from "@/types";
 
 function countWords(text: string): number {
@@ -42,16 +42,22 @@ export function JournalEditor({ initialEntry, date, today, streak }: Props) {
     initialEntry?.id ?? null
   );
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  // Use server-passed `today` for SSR, correct to local timezone after mount
+  const [localToday, setLocalToday] = useState(today);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<string>(initialEntry?.content ?? "");
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isToday = date === today;
+  useEffect(() => {
+    setLocalToday(getLocalToday());
+  }, []);
+
+  const isToday = date === localToday;
   const prevDate = shiftDate(date, -1);
   const nextDate = shiftDate(date, 1);
-  const canGoNext = nextDate <= today;
+  const canGoNext = nextDate <= localToday;
   const wordCount = countWords(content);
 
   // Auto-resize textarea to fit content
@@ -144,18 +150,25 @@ export function JournalEditor({ initialEntry, date, today, streak }: Props) {
               </svg>
             </Link>
 
-            {isToday ? (
-              <span className="text-[11px] font-semibold tracking-wider uppercase text-text-muted px-1">
-                Today
-              </span>
-            ) : (
-              <Link
-                href="/journal"
-                className="text-[11px] font-semibold tracking-wider uppercase text-accent px-1 hover:opacity-75 transition-opacity"
-              >
-                Today
-              </Link>
-            )}
+            <span suppressHydrationWarning>
+              {isToday ? (
+                <span className="text-[11px] font-semibold tracking-wider uppercase text-text-muted px-1">
+                  Today
+                </span>
+              ) : (
+                <Link
+                  href="/journal"
+                  title="Jump to today"
+                  className="flex items-center justify-center w-7 h-7 rounded-full text-text-muted hover:text-text hover:bg-surface-2 transition-colors"
+                >
+                  {/* Return-to-today icon */}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                  </svg>
+                </Link>
+              )}
+            </span>
 
             <Link
               href={canGoNext ? `/journal/${nextDate}` : "#"}

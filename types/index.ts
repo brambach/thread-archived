@@ -13,6 +13,7 @@ import type {
   workoutSets,
   captures,
   dayReviews,
+  googleTokens,
 } from "@/lib/db/schema";
 
 export type Habit = InferSelectModel<typeof habits>;
@@ -71,4 +72,21 @@ export type ExerciseHistory = {
   maxWeight: number | null;
   totalVolume: number | null;
   sets: WorkoutSet[];
+};
+
+export type GoogleToken = InferSelectModel<typeof googleTokens>;
+
+export type GCalEvent = {
+  id: string;
+  summary: string;
+  startTime: string; // "HH:mm" format
+  endTime: string; // "HH:mm" format
+  isAllDay: boolean;
+};
+
+export type CalendarListItem = {
+  id: string;
+  summary: string;
+  backgroundColor: string | null;
+  selected: boolean;
 };

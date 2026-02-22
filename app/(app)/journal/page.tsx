@@ -1,55 +1,15 @@
-import { db } from "@/lib/db";
-import { journalEntries } from "@/lib/db/schema";
-import { eq, lte, desc, isNotNull, and, ne } from "drizzle-orm";
-import { getToday } from "@/lib/utils";
-import { JournalEditor } from "@/components/journal/journal-editor";
+"use client";
 
-async function getStreak(today: string): Promise<number> {
-  // Fetch all dates that have non-empty entries, up to and including today
-  const entries = await db
-    .select({ date: journalEntries.date })
-    .from(journalEntries)
-    .where(
-      and(
-        isNotNull(journalEntries.content),
-        ne(journalEntries.content, ""),
-        lte(journalEntries.date, today)
-      )
-    )
-    .orderBy(desc(journalEntries.date))
-    .limit(365);
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { getLocalToday } from "@/lib/utils";
 
-  const dateSet = new Set(entries.map((e) => e.date));
+export default function JournalPage() {
+  const router = useRouter();
 
-  let streak = 0;
-  for (let i = 0; i < 365; i++) {
-    const [y, m, d] = today.split("-").map(Number);
-    const dt = new Date(Date.UTC(y, m - 1, d - i));
-    const ds = dt.toISOString().split("T")[0];
-    if (dateSet.has(ds)) streak++;
-    else break;
-  }
+  useEffect(() => {
+    router.replace(`/journal/${getLocalToday()}`);
+  }, [router]);
 
-  return streak;
-}
-
-export default async function JournalPage() {
-  const today = getToday();
-
-  const [entry] = await db
-    .select()
-    .from(journalEntries)
-    .where(eq(journalEntries.date, today))
-    .limit(1);
-
-  const streak = await getStreak(today);
-
-  return (
-    <JournalEditor
-      initialEntry={entry ?? null}
-      date={today}
-      today={today}
-      streak={streak}
-    />
-  );
+  return null;
 }

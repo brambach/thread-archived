@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TaskItem } from "./task-item";
 import { TaskForm } from "./task-form";
+import { getLocalToday } from "@/lib/utils";
 import type { Task } from "@/types";
 
 interface TaskListProps {
@@ -12,7 +13,7 @@ interface TaskListProps {
 
 export function TaskList({ initialTasks }: TaskListProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalToday();
 
   const doneCount = tasks.filter((t) => t.isDone).length;
   const total = tasks.length;

@@ -12,7 +12,7 @@
 | 3 | Morning routine history / streaks? | ✅ Resolved | Yes — streaks. Track consecutive completion days. |
 | 4 | Work section shape? | ✅ Resolved | Projects → Tasks + Meeting Notes + Status overview. Personal tasks can be tagged to a work project. |
 | 5 | Journal voice input? | ✅ Resolved | No custom API. Wispr Flow works natively on Mac desktop. iOS uses system dictation (mic button on keyboard). |
-| 6 | Google Cal sync — read-only or two-way? | ✅ Resolved | Two-way: read events from Google Cal + create/update events from Thread |
+| 6 | Google Cal sync — read-only or two-way? | ✅ Resolved | Read-only: fetch events from Google Cal and display as overlay on DayView. No writing back. |
 | 7 | Offline-first priority? | ✅ Resolved | Practical offline: cache today's view, habits, and journal. Not full offline-first engineering. |
 
 ---
@@ -695,14 +695,13 @@ created_at        timestamptz DEFAULT now()
 - Empty states for every tab
 - Pull-to-refresh
 
-### Sprint 7 — Calendar Integrations · `Opus`
-> Two-way sync is significantly more complex than read-only: you need OAuth + token refresh, conflict resolution, and a mapping table to track which Thread time blocks correspond to which Google Calendar event IDs.
-- Google Calendar OAuth (store refresh token locally — no auth layer needed since single user)
-- Read events → overlay on DayView as non-editable chips
-- Create Google Cal event when a time block is finalized in Thread
-- Update/delete Google Cal event when time block changes
-- Store `google_event_id` on `time_blocks` to maintain the mapping
-- Outlook/Exchange read-only overlay (two-way Outlook is a separate OAuth flow — defer or do read-only first)
+### Sprint 7 — Calendar Integrations (Read-Only) · `Opus`
+> Read-only Google Calendar overlay. OAuth + token refresh, fetch events for the day, display as non-editable chips on the DayView.
+- Google Calendar OAuth (store refresh token in DB — no auth layer needed since single user)
+- Fetch events for a given day from Google Calendar API
+- Display Google Cal events as read-only overlay chips on DayView
+- Settings page to connect/disconnect Google Calendar
+- Token refresh logic (access tokens expire after ~1 hour)
 
 ---
 

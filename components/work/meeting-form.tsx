@@ -2,12 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn, getLocalToday } from "@/lib/utils";
 import type { WorkMeeting } from "@/types";
-
-function getToday(): string {
-  return new Date().toISOString().split("T")[0];
-}
 
 interface MeetingFormProps {
   open: boolean;
@@ -29,7 +25,7 @@ export function MeetingForm({
   onDelete,
 }: MeetingFormProps) {
   const isEditing = !!meeting;
-  const [date, setDate] = useState(getToday());
+  const [date, setDate] = useState(getLocalToday());
   const [title, setTitle] = useState("");
   const [attendees, setAttendees] = useState("");
   const [notes, setNotes] = useState("");
@@ -47,7 +43,7 @@ export function MeetingForm({
         setNotes(meeting.notes ?? "");
         setActionItems(meeting.actionItems ?? "");
       } else {
-        setDate(getToday());
+        setDate(getLocalToday());
         setTitle("");
         setAttendees("");
         setNotes("");

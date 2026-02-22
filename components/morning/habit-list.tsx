@@ -4,6 +4,7 @@ import { useState, useCallback, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HabitItem } from "./habit-item";
 import { HabitEditor } from "./habit-editor";
+import { getLocalToday } from "@/lib/utils";
 import type { HabitWithCompletion } from "@/types";
 
 interface HabitListProps {
@@ -15,7 +16,7 @@ export function HabitList({ initialHabits }: HabitListProps) {
   const [editorOpen, setEditorOpen] = useState(false);
   const [, startTransition] = useTransition();
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalToday();
 
   const doneCount = habits.filter((h) => h.completion?.completed).length;
   const total = habits.length;

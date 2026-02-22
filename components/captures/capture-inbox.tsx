@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CaptureItem } from "./capture-item";
+import { getLocalToday } from "@/lib/utils";
 import type { Capture } from "@/types";
 
 interface CaptureInboxProps {
@@ -11,7 +12,7 @@ interface CaptureInboxProps {
 
 export function CaptureInbox({ initialCaptures }: CaptureInboxProps) {
   const [captures, setCaptures] = useState<Capture[]>(initialCaptures);
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalToday();
 
   const removeCapture = useCallback((captureId: string) => {
     setCaptures((prev) => prev.filter((c) => c.id !== captureId));

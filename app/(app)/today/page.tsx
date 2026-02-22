@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { habits, habitCompletions, workouts, workoutSets, exercises, dayReviews } from "@/lib/db/schema";
 import { eq, gte, asc, desc, inArray } from "drizzle-orm";
 import { getToday } from "@/lib/utils";
+import { getMorningQuote } from "@/lib/quotes";
 import { HabitList } from "@/components/morning/habit-list";
 import { GymTodayCard } from "@/components/gym/gym-today-card";
 import { EnergyPrompt } from "@/components/day-review/energy-prompt";
@@ -135,13 +136,18 @@ export default async function TodayPage() {
     db.select().from(dayReviews).where(eq(dayReviews.date, today)).limit(1).then((r) => r[0] ?? null),
   ]);
 
+  const morningQuote = getMorningQuote();
+
   return (
     <div className="pt-2 pb-6">
       <header className="py-2 pb-4">
         <h1 className="text-[26px] font-bold tracking-tight text-text leading-tight">
           {greeting}, Bryce.
         </h1>
-        <p className="text-sm text-text-secondary mt-0.5 mb-3">{dateStr}</p>
+        <p className="text-sm text-text-secondary mt-0.5">{dateStr}</p>
+        <p className="text-[13px] italic text-text-muted mt-2 mb-3 leading-snug">
+          {morningQuote}
+        </p>
         <EnergyPrompt initialRating={todayReview?.energyRating ?? null} />
       </header>
 

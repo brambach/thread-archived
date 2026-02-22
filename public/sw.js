@@ -2,8 +2,8 @@
 // Practical offline: cache today's view, habits, and journal.
 // Not full offline-first — just enough to feel native.
 
-const CACHE_NAME = "thread-v1";
-const STATIC_CACHE = "thread-static-v1";
+const CACHE_NAME = "thread-v4";
+const STATIC_CACHE = "thread-static-v4";
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = [

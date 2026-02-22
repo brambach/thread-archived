@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getEveningQuote } from "@/lib/quotes";
 import type { Task, DayReview } from "@/types";
 
 // Warm palette — slightly amber-tinted, winding down
@@ -130,7 +131,6 @@ export function CloseDayFlow({ onClose }: CloseDayFlowProps) {
     });
     setSubmitting(false);
     setStep("done");
-    setTimeout(onClose, 1800);
   };
 
   const stepIndex = step === "recap" ? 1 : step === "roll-forward" ? 2 : step === "intentions" ? 3 : 3;
@@ -223,7 +223,7 @@ export function CloseDayFlow({ onClose }: CloseDayFlowProps) {
               submitting={submitting}
             />
           ) : (
-            <DoneStep key="done" />
+            <DoneStep key="done" onClose={onClose} />
           )}
         </AnimatePresence>
       </div>
@@ -603,13 +603,16 @@ function IntentionsStep({
 
 // ── Done ────────────────────────────────────────────────────────────────────
 
-function DoneStep() {
+function DoneStep({ onClose }: { onClose: () => void }) {
+  const quote = getEveningQuote();
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
-      className="flex flex-col items-center justify-center h-full min-h-[60vh] px-5"
+      className="flex flex-col items-center justify-center h-full min-h-[70vh] px-8 cursor-pointer select-none"
+      onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0 }}
@@ -620,12 +623,33 @@ function DoneStep() {
       >
         <span className="text-2xl" style={{ color: WARM.accent }}>✓</span>
       </motion.div>
+
       <p className="text-lg font-semibold" style={{ color: WARM.text }}>
         Day closed.
       </p>
-      <p className="text-sm mt-1" style={{ color: WARM.textMuted }}>
+      <p className="text-sm mt-1 mb-10" style={{ color: WARM.textMuted }}>
         Rest well.
       </p>
+
+      <motion.p
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7, duration: 0.6, ease: "easeOut" }}
+        className="text-center text-sm italic leading-relaxed max-w-xs"
+        style={{ color: WARM.accentDim }}
+      >
+        &ldquo;{quote}&rdquo;
+      </motion.p>
+
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.8, duration: 0.5 }}
+        className="text-xs mt-10"
+        style={{ color: WARM.border }}
+      >
+        tap to close
+      </motion.p>
     </motion.div>
   );
 }
