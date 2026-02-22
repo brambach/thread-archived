@@ -83,6 +83,7 @@ export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }:
   const [gcalEvents, setGcalEvents] = useState<GCalEvent[]>(initialGCalEvents);
   const [editingBlock, setEditingBlock] = useState<TimeBlock | null>(null);
   const [confirmingDeleteBlock, setConfirmingDeleteBlock] = useState<TimeBlock | null>(null);
+  const [tappedTask, setTappedTask] = useState<Task | null>(null);
   const [showGcalSettings, setShowGcalSettings] = useState(false);
   const [nowOffset, setNowOffset] = useState<number | null>(getNowOffset);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
@@ -274,6 +275,24 @@ export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }:
   const handleLongPress = useCallback((block: TimeBlock) => {
     setConfirmingDeleteBlock(block);
   }, []);
+
+  const handleMarkTaskDone = useCallback(
+    async (taskId: string) => {
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      setTappedTask(null);
+      try {
+        await fetch(`/api/tasks/${taskId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isDone: true }),
+        });
+      } catch {
+        const res = await fetch(`/api/tasks?date=${selectedDate}`);
+        setTasks(await res.json());
+      }
+    },
+    [selectedDate]
+  );
 
   const handleUnlinkTask = useCallback(
     async (taskId: string) => {
@@ -519,7 +538,7 @@ export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }:
         </div>
 
         {/* Task drawer */}
-        <TaskDrawer tasks={unscheduledTasks} />
+        <TaskDrawer tasks={unscheduledTasks} onTaskTap={setTappedTask} />
       </div>
 
       {/* Drag overlay */}
@@ -543,6 +562,52 @@ export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }:
         onClose={() => setShowGcalSettings(false)}
         onConnectionChange={handleGcalConnectionChange}
       />
+
+      {/* Task tap action sheet */}
+      <AnimatePresence>
+        {tappedTask && (
+          <>
+            <motion.div
+              key="task-tap-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-[55] bg-black/60"
+              onClick={() => setTappedTask(null)}
+            />
+            <motion.div
+              key="task-tap-sheet"
+              initial={{ opacity: 0, y: 16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.97 }}
+              transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
+              className="fixed bottom-0 left-0 right-0 z-[56] px-4 pb-[calc(68px+env(safe-area-inset-bottom))]"
+            >
+              <div className="bg-surface-2 rounded-2xl p-4 border border-border">
+                <p className="text-[13px] text-text-secondary text-center mb-1">Task</p>
+                <p className="text-[16px] font-semibold text-text text-center mb-4 leading-snug">
+                  {tappedTask.title}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setTappedTask(null)}
+                    className="flex-1 py-3 rounded-xl bg-surface border border-border text-[14px] font-medium text-text-secondary active:bg-border transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleMarkTaskDone(tappedTask.id)}
+                    className="flex-1 py-3 rounded-xl bg-success/[0.08] border border-success/20 text-[14px] font-medium text-success active:bg-success/20 transition-colors"
+                  >
+                    Mark done
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Long-press delete confirmation */}
       <AnimatePresence>
