@@ -1,4 +1,21 @@
-export default function TasksPage() {
+import { db } from "@/lib/db";
+import { tasks } from "@/lib/db/schema";
+import { eq, asc } from "drizzle-orm";
+import { getToday } from "@/lib/utils";
+import { TaskList } from "@/components/tasks/task-list";
+import type { Task } from "@/types";
+
+async function getTodaysTasks(): Promise<Task[]> {
+  const today = getToday();
+  return db
+    .select()
+    .from(tasks)
+    .where(eq(tasks.date, today))
+    .orderBy(asc(tasks.isDone), asc(tasks.sortOrder), asc(tasks.createdAt));
+}
+
+export default async function TasksPage() {
+  const todaysTasks = await getTodaysTasks();
   const dateStr = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -14,10 +31,7 @@ export default function TasksPage() {
         <p className="text-sm text-text-secondary mt-0.5">{dateStr}</p>
       </header>
 
-      <div className="rounded-xl border border-border bg-surface p-6 text-center">
-        <p className="text-text-secondary text-sm">No tasks for today.</p>
-        <p className="text-text-muted text-xs mt-1">Add a task to get started.</p>
-      </div>
+      <TaskList initialTasks={todaysTasks} />
     </div>
   );
 }
