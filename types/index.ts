@@ -8,6 +8,9 @@ import type {
   workProjects,
   workTasks,
   workMeetings,
+  exercises,
+  workouts,
+  workoutSets,
 } from "@/lib/db/schema";
 
 export type Habit = InferSelectModel<typeof habits>;
@@ -31,4 +34,36 @@ export type WorkProjectWithStats = WorkProject & {
 export type HabitWithCompletion = Habit & {
   completion: HabitCompletion | null;
   streak: number;
+};
+
+export type Exercise = InferSelectModel<typeof exercises>;
+export type Workout = InferSelectModel<typeof workouts>;
+export type WorkoutSet = InferSelectModel<typeof workoutSets>;
+
+export type WorkoutSetWithExercise = WorkoutSet & {
+  exercise: Exercise;
+};
+
+export type ExerciseBlock = {
+  exercise: Exercise;
+  sets: WorkoutSet[];
+};
+
+export type WorkoutWithSets = Workout & {
+  exercises: ExerciseBlock[];
+  totalVolume: number;
+};
+
+export type WorkoutSummary = Workout & {
+  topExercises: string[];
+  totalVolume: number;
+  muscleGroups: string[];
+};
+
+export type ExerciseHistory = {
+  date: string;
+  workoutId: string;
+  maxWeight: number | null;
+  totalVolume: number | null;
+  sets: WorkoutSet[];
 };

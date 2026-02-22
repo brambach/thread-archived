@@ -1,9 +1,11 @@
 import { db } from "@/lib/db";
-import { habits, habitCompletions } from "@/lib/db/schema";
-import { eq, gte, asc, desc } from "drizzle-orm";
+import { habits, habitCompletions, workouts, workoutSets, exercises } from "@/lib/db/schema";
+import { eq, gte, asc, desc, inArray } from "drizzle-orm";
 import { getToday } from "@/lib/utils";
 import { HabitList } from "@/components/morning/habit-list";
-import type { HabitWithCompletion } from "@/types";
+import { GymTodayCard } from "@/components/gym/gym-today-card";
+import Link from "next/link";
+import type { HabitWithCompletion, WorkoutSummary } from "@/types";
 
 function computeStreak(
   completions: { date: string; completed: boolean }[]
@@ -71,6 +73,48 @@ async function getHabitsWithCompletions(): Promise<HabitWithCompletion[]> {
   }));
 }
 
+async function getTodayWorkout(): Promise<WorkoutSummary | null> {
+  const today = getToday();
+  const todayWorkouts = await db
+    .select()
+    .from(workouts)
+    .where(eq(workouts.date, today))
+    .orderBy(desc(workouts.createdAt));
+
+  if (todayWorkouts.length === 0) return null;
+
+  const w = todayWorkouts[0];
+  const sets = await db
+    .select({
+      exerciseId: workoutSets.exerciseId,
+      weightLbs: workoutSets.weightLbs,
+      reps: workoutSets.reps,
+    })
+    .from(workoutSets)
+    .where(eq(workoutSets.workoutId, w.id));
+
+  const exerciseIds = [...new Set(sets.map((s) => s.exerciseId))];
+  const exerciseRows = exerciseIds.length
+    ? await db
+        .select({ id: exercises.id, name: exercises.name, muscleGroup: exercises.muscleGroup })
+        .from(exercises)
+        .where(inArray(exercises.id, exerciseIds))
+    : [];
+
+  const totalVolume = sets.reduce((sum, s) => {
+    return sum + parseFloat(s.weightLbs ?? "0") * (s.reps ?? 0);
+  }, 0);
+
+  const muscleGroups = [...new Set(exerciseRows.map((e) => e.muscleGroup).filter(Boolean) as string[])];
+
+  return {
+    ...w,
+    topExercises: exerciseRows.slice(0, 3).map((e) => e.name),
+    totalVolume: Math.round(totalVolume),
+    muscleGroups,
+  };
+}
+
 export default async function TodayPage() {
   const now = new Date();
   const hour = now.getHours();
@@ -82,7 +126,10 @@ export default async function TodayPage() {
     day: "numeric",
   });
 
-  const habitsData = await getHabitsWithCompletions();
+  const [habitsData, todayWorkout] = await Promise.all([
+    getHabitsWithCompletions(),
+    getTodayWorkout(),
+  ]);
 
   return (
     <div className="pt-2 pb-6">
@@ -102,15 +149,14 @@ export default async function TodayPage() {
           <span className="text-[11px] font-semibold tracking-wider uppercase text-text-muted">
             Gym
           </span>
+          <Link
+            href="/gym"
+            className="text-[12px] text-text-muted hover:text-text-secondary transition-colors"
+          >
+            View all →
+          </Link>
         </div>
-        <div className="rounded-xl border border-border border-l-[3px] border-l-accent bg-surface p-3.5 px-4">
-          <p className="text-[15px] font-semibold text-text">
-            No workout logged today
-          </p>
-          <p className="text-[13px] text-text-secondary mt-1">
-            Tap to log a workout
-          </p>
-        </div>
+        <GymTodayCard todayWorkout={todayWorkout} />
       </section>
     </div>
   );
