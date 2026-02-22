@@ -99,7 +99,7 @@ export function TimeBlockCard({ block, task, onTap, onLongPress }: TimeBlockCard
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ type: "spring", damping: 25, stiffness: 300 }}
       className={cn(
-        "absolute left-0 right-0 mx-1 rounded-md border-l-2 px-2.5 py-1.5 cursor-pointer overflow-hidden",
+        "absolute left-0 right-0 mx-1 rounded-md border-l-2 px-2.5 py-1.5 cursor-pointer overflow-hidden select-none",
         colors.bg,
         colors.border
       )}
@@ -107,6 +107,7 @@ export function TimeBlockCard({ block, task, onTap, onLongPress }: TimeBlockCard
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onContextMenu={(e) => e.preventDefault()}
       onClick={handleClick}
     >
       <p className="text-[13px] font-medium text-text truncate leading-tight">

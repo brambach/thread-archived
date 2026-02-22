@@ -11,7 +11,7 @@ export default function AppLayout({
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
       <PullToRefresh>
-        <main className="px-5 pt-[env(safe-area-inset-top)] pb-24 max-w-lg mx-auto w-full">
+        <main className="px-5 pt-[env(safe-area-inset-top)] pb-[calc(5rem+env(safe-area-inset-bottom))] max-w-lg mx-auto w-full">
           <PageTransition>{children}</PageTransition>
         </main>
       </PullToRefresh>

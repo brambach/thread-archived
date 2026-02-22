@@ -554,7 +554,7 @@ export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }:
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="fixed inset-0 z-40 bg-black/60"
+              className="fixed inset-0 z-[55] bg-black/60"
               onClick={() => setConfirmingDeleteBlock(null)}
             />
             <motion.div
@@ -563,7 +563,7 @@ export function DayView({ initialBlocks, initialTasks, initialGCalEvents = [] }:
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.97 }}
               transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
-              className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+              className="fixed bottom-0 left-0 right-0 z-[56] px-4 pb-[calc(68px+env(safe-area-inset-bottom))]"
             >
               <div className="bg-surface-2 rounded-2xl p-4 border border-border">
                 <p className="text-[15px] font-semibold text-text text-center mb-1">
