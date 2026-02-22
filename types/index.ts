@@ -11,6 +11,7 @@ import type {
   exercises,
   workouts,
   workoutSets,
+  captures,
 } from "@/lib/db/schema";
 
 export type Habit = InferSelectModel<typeof habits>;
@@ -35,6 +36,8 @@ export type HabitWithCompletion = Habit & {
   completion: HabitCompletion | null;
   streak: number;
 };
+
+export type Capture = InferSelectModel<typeof captures>;
 
 export type Exercise = InferSelectModel<typeof exercises>;
 export type Workout = InferSelectModel<typeof workouts>;

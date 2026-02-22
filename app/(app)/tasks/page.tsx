@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
-import { tasks } from "@/lib/db/schema";
+import { tasks, captures } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { getToday } from "@/lib/utils";
 import { TaskList } from "@/components/tasks/task-list";
-import type { Task } from "@/types";
+import { CaptureInbox } from "@/components/captures/capture-inbox";
+import type { Task, Capture } from "@/types";
 
 async function getTodaysTasks(): Promise<Task[]> {
   const today = getToday();
@@ -14,8 +15,20 @@ async function getTodaysTasks(): Promise<Task[]> {
     .orderBy(asc(tasks.isDone), asc(tasks.sortOrder), asc(tasks.createdAt));
 }
 
+async function getUnprocessedCaptures(): Promise<Capture[]> {
+  return db
+    .select()
+    .from(captures)
+    .where(eq(captures.processed, false))
+    .orderBy(asc(captures.createdAt));
+}
+
 export default async function TasksPage() {
-  const todaysTasks = await getTodaysTasks();
+  const [todaysTasks, unprocessedCaptures] = await Promise.all([
+    getTodaysTasks(),
+    getUnprocessedCaptures(),
+  ]);
+
   const dateStr = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -31,6 +44,7 @@ export default async function TasksPage() {
         <p className="text-sm text-text-secondary mt-0.5">{dateStr}</p>
       </header>
 
+      <CaptureInbox initialCaptures={unprocessedCaptures} />
       <TaskList initialTasks={todaysTasks} />
     </div>
   );

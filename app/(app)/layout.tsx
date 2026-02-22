@@ -1,4 +1,5 @@
 import { BottomNav } from "@/components/nav/bottom-nav";
+import { CaptureUI } from "@/components/captures/capture-ui";
 
 export default function AppLayout({
   children,
@@ -11,6 +12,7 @@ export default function AppLayout({
         {children}
       </main>
       <BottomNav />
+      <CaptureUI />
     </div>
   );
 }
