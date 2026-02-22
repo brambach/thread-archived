@@ -3,9 +3,9 @@ import { journalEntries } from "@/lib/db/schema";
 import { eq, lte, desc, isNotNull, and, ne } from "drizzle-orm";
 import { getToday } from "@/lib/utils";
 import { JournalEditor } from "@/components/journal/journal-editor";
+import { notFound } from "next/navigation";
 
 async function getStreak(today: string): Promise<number> {
-  // Fetch all dates that have non-empty entries, up to and including today
   const entries = await db
     .select({ date: journalEntries.date })
     .from(journalEntries)
@@ -33,13 +33,29 @@ async function getStreak(today: string): Promise<number> {
   return streak;
 }
 
-export default async function JournalPage() {
+// Validate YYYY-MM-DD format
+function isValidDate(s: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s));
+}
+
+export default async function JournalDatePage({
+  params,
+}: {
+  params: Promise<{ date: string }>;
+}) {
+  const { date } = await params;
+
+  if (!isValidDate(date)) notFound();
+
   const today = getToday();
+
+  // If someone navigates to a future date beyond today, redirect to today's page
+  if (date > today) notFound();
 
   const [entry] = await db
     .select()
     .from(journalEntries)
-    .where(eq(journalEntries.date, today))
+    .where(eq(journalEntries.date, date))
     .limit(1);
 
   const streak = await getStreak(today);
@@ -47,7 +63,7 @@ export default async function JournalPage() {
   return (
     <JournalEditor
       initialEntry={entry ?? null}
-      date={today}
+      date={date}
       today={today}
       streak={streak}
     />
