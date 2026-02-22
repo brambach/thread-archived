@@ -65,3 +65,14 @@ body {
   }
 }
 
+/* Mobile: remove tap highlight flash and 300ms button delay */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+

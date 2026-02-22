@@ -1,5 +1,7 @@
 "use client";
 
+import { useRef } from "react";
+
 interface DateScrubberProps {
   selectedDate: string;
   onDateChange: (date: string) => void;
@@ -30,8 +32,28 @@ function formatDateLabel(dateStr: string): string {
 }
 
 export function DateScrubber({ selectedDate, onDateChange, onSettingsTap }: DateScrubberProps) {
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+    // Require a clear horizontal swipe: ≥48px wide, and at least 2× the vertical movement
+    if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 2) return;
+    onDateChange(addDays(selectedDate, dx < 0 ? 1 : -1));
+  };
+
   return (
-    <header className="flex items-center justify-between py-2 pb-4">
+    <header
+      className="flex items-center justify-between py-2 pb-4"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <h1 className="text-lg font-bold text-text tracking-tight">
         {formatDateLabel(selectedDate)}
       </h1>
